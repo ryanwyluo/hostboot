@@ -239,13 +239,26 @@ sub processIpmiSensors {
                 $sensor_name=$name."_".$name_suffix;
             }
             my $attribute_name="";
+
+            if ($sensor_id ne "")
+            {
             my $s=sprintf("0x%02X%02X,0x%02X",
                   oct($sensor_type),oct($entity_id),oct($sensor_id));
             push(@sensors,$s);
+            }else
+            {
+            my $s=sprintf("0x%02X%02X,0xFF",
+                  oct($sensor_type),oct($entity_id));
+            push(@sensors,$s);
+            }
+
             my $sensor_id_str = "";
             if ($sensor_id ne "")
             {
                 $sensor_id_str = sprintf("0x%02X",oct($sensor_id));
+            }else
+            {
+                $sensor_id_str = sprintf("N/A");
             }
             my $str=sprintf(
                 " %30s | %10s |  0x%02X  | 0x%02X |    0x%02x   |" .

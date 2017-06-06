@@ -967,7 +967,8 @@ ReturnCode mss_rcd_load_ddr4(
 
             // ALL active CS lines at a time.
             rc_num = rc_num | csn_8.setBit(0,8);
-            rc_num = rc_num | csn_8.clearBit(0); //DCS0_n is LOW
+            //rc_num = rc_num | csn_8.clearBit(0); //DCS0_n is LOW
+            rc_num = rc_num | csn_8.clearBit(4 * dimm_number); //DCS0_n is LOW for dimm_number = 0  DCS4_n is LOW for dimm_number = 1
 
             // DBG1, DBG0, DBA1, DBA0 = 4`b0111
             rc_num = rc_num | bank_3.setBit(0, 3);

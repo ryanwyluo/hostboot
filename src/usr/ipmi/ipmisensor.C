@@ -216,13 +216,13 @@ namespace SENSOR
         }
         else
         {
-            TRACFCOMP(g_trac_ipmi,"We were not able to find a sensor number in"
+            TRACFCOMP(g_trac_ipmi,"Found a reserved sensor number (0xFF) in"
                       " the IPMI_SENSORS attribute for sensor_name=0x%x"
                       "for target with huid=0x%x, skipping call to "
                       "sendSetSensorReading()",
                     iv_name, TARGETING::get_huid( iv_target ));
 
-            assert(false);
+            //assert(false);  //Just bypass this sensor, and modify the sensor number to 0xff. Skip assert() to make system keep booting;
 
         }
 
