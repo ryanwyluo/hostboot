@@ -6,7 +6,7 @@
 #
 # OpenPOWER HostBoot Project
 #
-# Contributors Listed Below - COPYRIGHT 2015,2016
+# Contributors Listed Below - COPYRIGHT 2015,2017
 # [+] International Business Machines Corp.
 #
 #
@@ -666,6 +666,13 @@ sub setupBars
     {
         my ($num,$base,$node_offset,$proc_offset,$offset) = split(/,/,
                $targetObj->getAttribute($target,$bar));
+
+        # eliminate extra whitespace to work around a bug in Math::BigInt
+        $base = nowhitespace($base);
+        $node_offset = nowhitespace($node_offset);
+        $proc_offset = nowhitespace($proc_offset);
+        $offset = nowhitespace($offset);
+
         my $i_base = Math::BigInt->new($base);
         my $i_node_offset = Math::BigInt->new($node_offset);
         my $i_proc_offset = Math::BigInt->new($proc_offset);
@@ -1433,3 +1440,13 @@ Options:
 ";
     exit(1);
 }
+
+# eliminate extra whitespace 
+#    Input: string to chop
+sub nowhitespace
+{
+    my $temp = shift(@_);
+    $temp =~ s/(^\s+|\s+$)//g;
+    return $temp;
+}
+

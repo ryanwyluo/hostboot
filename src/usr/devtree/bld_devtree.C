@@ -5,7 +5,7 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* Contributors Listed Below - COPYRIGHT 2013,2016                        */
+/* Contributors Listed Below - COPYRIGHT 2013,2017                        */
 /* [+] Google Inc.                                                        */
 /* [+] International Business Machines Corp.                              */
 /*                                                                        */
@@ -53,6 +53,7 @@
 #include <secureboot/trustedbootif.H>
 #include <secureboot/service.H>
 #include <ipmi/ipmisensor.H>
+#include <ipmi/ipmifruinv.H>
 #include <fapi.H>
 #include <fapiPlatHwpInvoker.H> // for fapi::fapiRcToErrl()
 #include <vpd/mvpdenums.H>
@@ -1642,12 +1643,26 @@ errlHndl_t bld_fdt_system(devTree * i_dt, bool i_smallTree)
 
     dtOffset_t rootNode = i_dt->findNode("/");
 
+    TARGETING::Target* sys = NULL;
+    TARGETING::targetService().getTopLevelTarget(sys);
+
     //Common settings
     /* Define supported power states -- options:
                          nap, deep-sleep, fast-sleep, rvwinkle*/
-    const char* pmode_compatStrs[] = {"nap", "fast-sleep", "rvwinkle", NULL};
-    i_dt->addPropertyStrings(rootNode, "ibm,enabled-idle-states",
-                             pmode_compatStrs);
+    uint8_t l_sleepEnable = sys->getAttr<TARGETING::ATTR_PM_SLEEP_ENABLE>();
+    if( l_sleepEnable )
+    {
+        const char* pmode_compatStrs[] = { "nap", "fast-sleep",
+                                           "rvwinkle", NULL };
+        i_dt->addPropertyStrings(rootNode, "ibm,enabled-idle-states",
+                                 pmode_compatStrs);
+    }
+    else
+    {
+        const char* pmode_compatStrs[] = { "nap", "rvwinkle", NULL };
+        i_dt->addPropertyStrings(rootNode, "ibm,enabled-idle-states",
+                                 pmode_compatStrs);
+    }
 
     // Nothing to do for small trees currently.
     if (!i_smallTree)
@@ -1658,8 +1673,6 @@ errlHndl_t bld_fdt_system(devTree * i_dt, bool i_smallTree)
         //===== compatible =====
         /* Fetch the MRW-defined compatible model from attributes */
         ATTR_OPAL_MODEL_type l_model = {0};
-        TARGETING::Target* sys = NULL;
-        TARGETING::targetService().getTopLevelTarget(sys);
         sys->tryGetAttr<TARGETING::ATTR_OPAL_MODEL>(l_model);
 
         /* Add compatibility value */
@@ -1856,8 +1869,22 @@ errlHndl_t bld_fdt_system(devTree * i_dt, bool i_smallTree)
             TARGETING::ATTR_SERIAL_NUMBER_type l_sn = {'\0'};
             l_pNode->tryGetAttr<TARGETING::ATTR_SERIAL_NUMBER>(l_sn);
             str_chomp(reinterpret_cast<char*>(&l_sn[0]));
-            i_dt->addPropertyString(rootNode, "serial-number",
+            i_dt->addPropertyString(rootNode, "ibm,board-serial-number",
                                     reinterpret_cast<char*>(&l_sn[0]));
+
+            #ifdef CONFIG_BMC_SERIAL
+              #ifdef CONFIG_BMC_IPMI
+                //Get Product Serial Number from Backplane
+                char* l_sn_prod = NULL;
+                l_sn_prod = IPMIFRUINV::getProductSN(0);
+                i_dt->addPropertyString(rootNode, "serial-number",
+                                         reinterpret_cast<char*>(l_sn_prod));
+                //getProductSN requires the caller to delete the char array
+                delete[] l_sn_prod;
+                l_sn_prod = NULL;
+              #endif
+            #endif
+
         }
         // just delete any errors we get, this isn't critical
         if( errhdl )

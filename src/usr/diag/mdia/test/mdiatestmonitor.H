@@ -118,6 +118,9 @@ class MdiaCommandMonitorTest: public CxxTest::TestSuite
                      l_monID5 = 0,
                      l_monID6 = 0,
                      l_monID7 = 0;
+
+            mutex_lock(i_mutex);
+
             l_monID1 = l_cm.addMonitor(l_mntCmdTime);
             l_sm.addMonitor(l_monID1);
             l_monID2 = l_cm.addMonitor(l_mntCmdTime);
@@ -133,10 +136,10 @@ class MdiaCommandMonitorTest: public CxxTest::TestSuite
             l_monID7 = l_cm.addMonitor(l_mntCmdTime);
             l_sm.addMonitor(l_monID7);
 
-            TS_TRACE("Monitor ID's: l_monID1=%d, l_modID2=%d, l_modID3=%d, "
-                     "l_modID4=%d, l_modID5=%d, l_modID6=%d, l_modID7=%d",
-                     l_monID1, l_monID2, l_monID3, l_monID4, l_monID5,
-                     l_monID6, l_monID7);
+            MDIA_FAST("Monitor ID's: l_monID1=%d, l_modID2=%d, l_modID3=%d, "
+                      "l_modID4=%d, l_modID5=%d, l_modID6=%d, l_modID7=%d",
+                      l_monID1, l_monID2, l_monID3, l_monID4, l_monID5,
+                      l_monID6, l_monID7);
 
             //Remove 4 of the 7 monIDs
             l_cm.removeMonitor(l_monID1);
@@ -158,7 +161,6 @@ class MdiaCommandMonitorTest: public CxxTest::TestSuite
             }
 
             //Wait till all monitorIDs have timed out
-            mutex_lock(i_mutex);
             while(false == l_sm.isTimeoutProcessed())
             {
                 sync_cond_wait(i_cond, i_mutex);
